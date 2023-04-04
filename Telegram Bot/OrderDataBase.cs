@@ -63,5 +63,17 @@ namespace Telegram_Bot
 
             return orders;
         }
+
+        public static void DeleteOrder(string text)
+        {
+            SQLiteConnection connection = new SQLiteConnection("Data Source=orders.sqlite;Version=3; FailIfMissing=False");
+            connection.Open();
+            command = new SQLiteCommand(connection)
+            {
+                CommandText = $"DELETE FROM orders WHERE text = \"{text}\""
+            };
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
     }
 }
