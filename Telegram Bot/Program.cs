@@ -205,6 +205,8 @@ namespace Telegram_Bot
                     }
                 }
 
+                if (message != null) { 
+
                 if (callbackData is null && UserDataBase.GetState(message.Chat.Id) != "no")// Стейты ...
                 {
                     if (UserDataBase.GetState(message.Chat.Id) == "Mailing_get_text")
@@ -288,155 +290,164 @@ namespace Telegram_Bot
                     }
                 }
 
-                if (callbackData is null && UserDataBase.GetState(message.Chat.Id) == "no")
-                {
-                    await Console.Out.WriteLineAsync($"Сообщение: {message.Text}, от {message.From.FirstName} {message.Chat.Id}");
-                    if (message.Text == "/start" || message.Text == "/help")
+                    if (callbackData is null && UserDataBase.GetState(message.Chat.Id) == "no")
                     {
+                        await Console.Out.WriteLineAsync($"Сообщение: {message.Text}, от {message.From.FirstName} {message.Chat.Id}");
+                        if (message.Text == "/start" || message.Text == "/help")
+                        {
 
-                        var replyKeyboard = new ReplyKeyboardMarkup(new[]
-                            {
+                            var replyKeyboard = new ReplyKeyboardMarkup(new[]
+                                {
                         new KeyboardButton[]{"Магазин"},
                         new KeyboardButton[]{"Настройки"}
                     })
-                        {
-                            ResizeKeyboard = true
-                        };
-
-                        if (UserDataBase.IsAdmin(message.Chat.Id))
-                        {
-                            replyKeyboard = new ReplyKeyboardMarkup(new[]
-                        {
-                        new KeyboardButton[]{"Магазин"},
-                        new KeyboardButton[]{"Настройки"},
-                        new KeyboardButton[]{ "Панель Админа" }
-                    })
                             {
                                 ResizeKeyboard = true
                             };
-                        }
-
-
-
-                        if (UserDataBase.IsUser(message.Chat.Id))
-                        {
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"Здравствуйте {message.From.FirstName}! Наш бот-магазин приветствует Вас! В нашем магазине вы можете купить различные вещи.", replyMarkup: replyKeyboard);
-                        }
-                        else
-                        {
-                            UserDataBase.AddUser(message.From.FirstName, message.Chat.Id, message.MessageId);
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"Здравствуйте {message.From.FirstName}, наш бот-магазин приветствует Вас! В нашем магазине вы можете купить различные вещи.", replyMarkup: replyKeyboard);
-                        }
-
-                    }
-                    else if (message.Text == "Панель Админа")
-                    {
-                        if (UserDataBase.IsAdmin(message.Chat.Id))
-                        {
-                            var replyKeyboard = new ReplyKeyboardMarkup(new[]
-                            {
-                        new KeyboardButton[]{"Создать рассылку"},
-                        new KeyboardButton[]{"Добавить товар в магаизн"},
-                        new KeyboardButton[]{ "Панель пользователя" }
-                    })
-                            {
-                                ResizeKeyboard = true
-                            };
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Режим админа активирован", replyMarkup: replyKeyboard);
-                        }
-                        else
-                        {
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Вы не админ");
-                        }
-                    }
-                    else if (message.Text == "Панель пользователя")
-                    {
-                        if (UserDataBase.IsAdmin(message.Chat.Id))
-                        {
-                            var replyKeyboard = new ReplyKeyboardMarkup(new[]
-                        {
-                        new KeyboardButton[]{"Магазин"},
-                        new KeyboardButton[]{"Настройки"},
-                        new KeyboardButton[]{ "Панель Админа" }
-                    })
-                            {
-                                ResizeKeyboard = true
-                            };
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Режим пользователя активирован", replyMarkup: replyKeyboard);
-                        }
-                    }
-                    else if (message.Text == "Создать рассылку")
-                    {
-                        if (UserDataBase.IsAdmin(message.Chat.Id))
-                        {
-                            InlineKeyboardMarkup InlineKeyboard = new InlineKeyboardMarkup(new[]
-                                {
-                                InlineKeyboardButton.WithCallbackData(text: "Отмена", callbackData: "cancel_state")
-                            });
-                            UserDataBase.SetState(message.Chat.Id, "Mailing_get_text");
-                            MailingStateDataBase.NewStateChatID(message.Chat.Id);
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Введите текст рассылки", replyMarkup: InlineKeyboard);
-                        }
-                    }
-                    else if (message.Text == "Добавить товар в магаизн")
-                    {
-                        if (UserDataBase.IsAdmin(message.Chat.Id))
-                        {
-                            InlineKeyboardMarkup InlineKeyboard = new InlineKeyboardMarkup(new[]
-                        {
-                            InlineKeyboardButton.WithCallbackData(text: "Отмена", callbackData: "cancel_state")
-                        });
-                            UserDataBase.SetState(message.Chat.Id, "order_get_text");
-                            OrderStateDataBase.NewStateChatID(message.Chat.Id);
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Введите текстовое описание товара вкючая цену на него, ссылку на человека, которому нужно писать и т. д.", replyMarkup: InlineKeyboard);
-
-                        }
-                    }
-                    else if (message.Text == "Магазин")
-                    {
-                        try
-                        {
-                            List<string[]> orders = OrderDataBase.GetOrders();
-                            long order_position = 0;
-
-                            InlineKeyboardButton[] row1 = new InlineKeyboardButton[]
-                            {
-                        InlineKeyboardButton.WithCallbackData(text: $"{order_position + 1}", callbackData: "Null"),
-                        InlineKeyboardButton.WithCallbackData(text: "/", callbackData: "Null"),
-                        InlineKeyboardButton.WithCallbackData(text: $"{orders.Count}", callbackData: "Null"),
-                            };
-
-                            InlineKeyboardButton[] row2 = new InlineKeyboardButton[]
-                            {
-                        InlineKeyboardButton.WithCallbackData(text: "<", callbackData: "PastOrder"),
-                        InlineKeyboardButton.WithCallbackData(text: ">", callbackData: "NextOrder"),
-                            };
-
-                            InlineKeyboardButton[][] buttons = new InlineKeyboardButton[3][];
 
                             if (UserDataBase.IsAdmin(message.Chat.Id))
                             {
-                                InlineKeyboardButton[] row3 = new InlineKeyboardButton[]
+                                replyKeyboard = new ReplyKeyboardMarkup(new[]
+                            {
+                        new KeyboardButton[]{"Магазин"},
+                        new KeyboardButton[]{"Настройки"},
+                        new KeyboardButton[]{ "Панель Админа" }
+                    })
                                 {
-                            InlineKeyboardButton.WithCallbackData(text: "Удалить", callbackData: "delete_order")
+                                    ResizeKeyboard = true
                                 };
-                                buttons = new InlineKeyboardButton[][] { row1, row2, row3 };
+                            }
+
+
+
+                            if (UserDataBase.IsUser(message.Chat.Id))
+                            {
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"Здравствуйте {message.From.FirstName}! Наш бот-магазин приветствует Вас! В нашем магазине вы можете купить различные вещи.", replyMarkup: replyKeyboard);
                             }
                             else
                             {
-                                buttons = new InlineKeyboardButton[][] { row1, row2 };
+                                UserDataBase.AddUser(message.From.FirstName, message.Chat.Id, message.MessageId);
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"Здравствуйте {message.From.FirstName}, наш бот-магазин приветствует Вас! В нашем магазине вы можете купить различные вещи.", replyMarkup: replyKeyboard);
                             }
-                            InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(buttons);
 
-                            string text = orders[Convert.ToInt32(order_position)][0];
-                            string photo = orders[Convert.ToInt32(order_position)][1];
-                            var botMessage = await botClient.SendPhotoAsync(chatId: message.Chat.Id, caption: text, photo: photo, parseMode: ParseMode.Html, replyMarkup: keyboard);
-                            UserDataBase.SetOrderPosition(message.Chat.Id, order_position);
-                            UserDataBase.SetMainMessage(message.Chat.Id, botMessage.MessageId);
                         }
-                        catch (Exception)
+                        else if (message.Text == "Панель Админа")
                         {
-                            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Магазин пуст");
+                            if (UserDataBase.IsAdmin(message.Chat.Id))
+                            {
+                                var replyKeyboard = new ReplyKeyboardMarkup(new[]
+                                {
+                        new KeyboardButton[]{"Создать рассылку"},
+                        new KeyboardButton[]{"Добавить товар в магаизн"},
+                        new KeyboardButton[]{ "Форматирование текста" },
+                        new KeyboardButton[]{ "Панель пользователя" }
+                    })
+                                {
+                                    ResizeKeyboard = true
+                                };
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Режим админа активирован", replyMarkup: replyKeyboard);
+                            }
+                            else
+                            {
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Вы не админ");
+                            }
+                        }
+                        else if (message.Text == "Панель пользователя")
+                        {
+                            if (UserDataBase.IsAdmin(message.Chat.Id))
+                            {
+                                var replyKeyboard = new ReplyKeyboardMarkup(new[]
+                            {
+                        new KeyboardButton[]{"Магазин"},
+                        new KeyboardButton[]{"Настройки"},
+                        new KeyboardButton[]{ "Панель Админа" }
+                    })
+                                {
+                                    ResizeKeyboard = true
+                                };
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Режим пользователя активирован", replyMarkup: replyKeyboard);
+                            }
+                        }
+                        else if (message.Text == "Создать рассылку")
+                        {
+                            if (UserDataBase.IsAdmin(message.Chat.Id))
+                            {
+                                InlineKeyboardMarkup InlineKeyboard = new InlineKeyboardMarkup(new[]
+                                    {
+                                InlineKeyboardButton.WithCallbackData(text: "Отмена", callbackData: "cancel_state")
+                            });
+                                UserDataBase.SetState(message.Chat.Id, "Mailing_get_text");
+                                MailingStateDataBase.NewStateChatID(message.Chat.Id);
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Введите текст рассылки", replyMarkup: InlineKeyboard);
+                            }
+                        }
+                        else if (message.Text == "Добавить товар в магаизн")
+                        {
+                            if (UserDataBase.IsAdmin(message.Chat.Id))
+                            {
+                                InlineKeyboardMarkup InlineKeyboard = new InlineKeyboardMarkup(new[]
+                            {
+                            InlineKeyboardButton.WithCallbackData(text: "Отмена", callbackData: "cancel_state")
+                        });
+                                UserDataBase.SetState(message.Chat.Id, "order_get_text");
+                                OrderStateDataBase.NewStateChatID(message.Chat.Id);
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Введите текстовое описание товара вкючая цену на него, ссылку на человека, которому нужно писать и т. д.", replyMarkup: InlineKeyboard);
+
+                            }
+                        }
+                        else if (message.Text == "Магазин")
+                        {
+                            try
+                            {
+                                List<string[]> orders = OrderDataBase.GetOrders();
+                                long order_position = 0;
+
+                                InlineKeyboardButton[] row1 = new InlineKeyboardButton[]
+                                {
+                        InlineKeyboardButton.WithCallbackData(text: $"{order_position + 1}", callbackData: "Null"),
+                        InlineKeyboardButton.WithCallbackData(text: "/", callbackData: "Null"),
+                        InlineKeyboardButton.WithCallbackData(text: $"{orders.Count}", callbackData: "Null"),
+                                };
+
+                                InlineKeyboardButton[] row2 = new InlineKeyboardButton[]
+                                {
+                        InlineKeyboardButton.WithCallbackData(text: "<", callbackData: "PastOrder"),
+                        InlineKeyboardButton.WithCallbackData(text: ">", callbackData: "NextOrder"),
+                                };
+
+                                InlineKeyboardButton[][] buttons = new InlineKeyboardButton[3][];
+
+                                if (UserDataBase.IsAdmin(message.Chat.Id))
+                                {
+                                    InlineKeyboardButton[] row3 = new InlineKeyboardButton[]
+                                    {
+                            InlineKeyboardButton.WithCallbackData(text: "Удалить", callbackData: "delete_order")
+                                    };
+                                    buttons = new InlineKeyboardButton[][] { row1, row2, row3 };
+                                }
+                                else
+                                {
+                                    buttons = new InlineKeyboardButton[][] { row1, row2 };
+                                }
+                                InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(buttons);
+
+                                string text = orders[Convert.ToInt32(order_position)][0];
+                                string photo = orders[Convert.ToInt32(order_position)][1];
+                                var botMessage = await botClient.SendPhotoAsync(chatId: message.Chat.Id, caption: text, photo: photo, parseMode: ParseMode.Html, replyMarkup: keyboard);
+                                UserDataBase.SetOrderPosition(message.Chat.Id, order_position);
+                                UserDataBase.SetMainMessage(message.Chat.Id, botMessage.MessageId);
+                            }
+                            catch (Exception)
+                            {
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "Магазин пуст");
+                            }
+                        }
+                        else if (message.Text == "Форматирование текста")
+                        {
+                            if (UserDataBase.IsAdmin(message.Chat.Id))
+                            {
+                                await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "При форматировании текста вы можете использовать HTML теги: http://htmlbook.ru/content/formatirovanie-teksta.\n");
+                            }
                         }
                     }
                 }
